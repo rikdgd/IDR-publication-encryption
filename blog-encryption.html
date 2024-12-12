@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- syntax hightlighting -->
+    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/dracula.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script> -->
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- and it's easy to individually load additional languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+
+    <script>hljs.highlightAll();</script>
+    
+    
+    <title>Rik's IDR Blog</title>
+    <style>
+        /* General Reset */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #1e1e2f;
+            color: #f0f0f0;
+        }
+
+        /* Container */
+        .container {
+            width: 60vw;
+            margin: 20px auto;
+            padding: 20px;
+            background: #29293d;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #4e88f7;
+        }
+
+        header h1 {
+            color: #4e88f7;
+        }
+
+        /* Section Styling */
+        section {
+            margin: 20px 0;
+        }
+
+        section h2 {
+            color: #68d391;
+            margin-bottom: 10px;
+            margin-top: 3rem;
+        }
+        
+        section h3 {
+            color: #c87c55;
+            margin-bottom: 0px;
+            margin-top: 2rem;
+        }
+
+        section p {
+            margin-bottom: 15px;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background: #282c34;
+            border-left: 4px solid #4e88f7;
+            padding: 10px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+
+        code {
+            font-family: "Courier New", Courier, monospace;
+            color: #fbd38d;
+            font-size: 14px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 10px 0;
+            color: #cbd5e0;
+            font-size: 0.9em;
+            border-top: 1px solid #4e88f7;
+        }
+
+        footer a {
+            color: #4e88f7;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #2f2f47;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #4e88f7;
+            color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        table tr {
+            border-bottom: 1px solid #404050;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #353546;
+        }
+
+        table tr:hover {
+            background-color: #3f3f5b;
+        }
+
+        table td {
+            color: #cbd5e0;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>How I created an encryption algorithm with little math knowledge.</h1>
+            <p>A blog by Rik de Goede</p>
+        </header>
+
+        <section id="introduction">
+            <h2>Introduction - Why did I do this?</h2>
+            <p>
+                The past couple of weeks I have been learning about encryption and how common algorithms work internally. 
+                Encryption is very under-appreciated, especially outside of the IT world. It is because of encryption 
+                that we can all securely use the internet and still most people have but the slightest clue of what it even is. 
+                <br>
+                I myself didn't know much about encryption either, but was very interested in it. So to learn more about it I decided to create my own encryption algorithm.
+                <br>
+                This blog will take you through the steps I took to get there, as well as how I tested it. Let's get started!
+            </p>
+        </section>
+
+        <section id="xor-encryptor">
+            <h2>First version - XOR encryptor</h2>
+            <p>
+                To create my own encryption algorithm, I wanted to start simple and increase the complexity and (hopefully) security gradually. 
+            </p>
+            <p>
+                When looking into existing encryption algorithms, you will notice pretty soon that the so called 
+                'XOR logic gate' is used a lot. This is because it has a couple of neat properties that are very useful 
+                when working with cryptography. The XOR logic gate is used to compare two bits, and will return a new bit. 
+                If it returns 0 or 1 is determined as follows:
+            </p>
+            
+            <ul>
+                <li>Are both input bits different (1 & 0 or 0 & 1), then the output bit is 1.</li>
+                <li>Are both input bits the same (1 & 1 or 0 & 0), then the output bit is 0.</li>
+            </ul>
+            
+            <p>
+                Believe it or not, but only the XOR logic gate is enough to create a first version of something you can 
+                call encryption. This is exactly what I did, and the way it works is as follows:
+            </p>
+            
+            <ol>
+                <li>Get the plaintext and password from the user.</li>
+                <li>Calculate the length of the entered password.</li>
+                <li>Loop over the plaintext in chunks with equal length to the provided password.</li>
+                <li>XOR the chunk and password together, and push the result to the end of the ciphertext.</li>
+                <li>When the entire plaintext has been XOR'ed with the password, return the ciphertext.</li>
+            </ol>
+            
+            <p>The code looks somewhat like this:</p>
+            
+            <pre><code>
+pub fn encrypt(&mut self) -> std::io::Result<()> {  
+    let file_bytes = self.read_file_bytes()?;  
+    let mut encrypted_bytes = Vec::new();  
+        
+    for chunk in file_bytes.chunks(self.key_length) {  
+        let chunk = chunk.to_vec();  
+        let xor_chunk = self.xor_chunk(chunk)?;  
+        for byte in xor_chunk {  
+            encrypted_bytes.push(byte);  
+        }  
+    }  
+        
+    self.clear_write_file(encrypted_bytes)?;  
+    Ok(())  
+}
+            </code></pre>
+            
+            <h3>Issues</h3>
+            <p>
+                While it might seems like this would be quite good at obscuring data, it truly is not. Any patterns in 
+                our plaintext are probably recognizable, and we directly use the user provided password. Since it was 
+                provided by a human, its probably not that random and pretty short.
+            </p>
+            
+            <p>
+                Apart from this, when encrypting files this way, the cipher text might just look somewhat like this 
+                (can you guess the password I used?): 
+            </p>
+            
+            <img src="./pass-in-ciphertext.png" alt="password-in-ciphertext"/>
+            
+            <h3>What I learned</h3>
+            <p>
+                Creating this very minimal encryption algorithm has made me more comfortable with directly working with 
+                bytes and logic gates. More importantly however is that it has shown me that vulnerabilties in 
+                cryptographic algorithms are sometimes hard to find. I had never thought about the fact that simply 
+                XOR'ing the password over a file could directly expose that password. 
+            </p>
+            
+        </section>
+        
+        <section id="key-derivation">
+            <h2>Adding more complexity, using key derivation</h2>
+            
+            <p>
+                The algorithm we've made this far is interesting, but far from secure. One of the issues it has is the 
+                fact that it directly uses the user's input as a secret key to encrypt data. This is a bad practice 
+                since user entered passwords are often far from random, and in the world of encryption it is often 
+                important to be 'as random as possible'. 
+            </p>
+            
+            <p>
+                What we could do is use the user provided password to generate a secure cryptographic key, and then use 
+                that key for encryption. The process of calculating a key based on some input is called '<i>key derivation</i>'. 
+            </p>
+            
+            <p>
+                This was exactly what I did for my algorithm, however I did not make my own key derivation function as 
+                this was beyond the scope of my research. Luckily there are some key derivation functions that are 
+                proven to be secure, and the one I chose to use is called: 'PBKDF2' standing for <i>Password Based Key 
+                Derivation Function 2</i>.
+            </p>
+            
+            <p>
+                The code I wrote to use PBKDF2 to generate a new key looks like this:
+            </p>
+            
+            <pre><code>
+const ITERATIONS: u32 = 600_000;  
+
+#[derive(Debug, Clone, PartialEq)]  
+pub struct KeyDetails {  
+    pub password: String,  
+    pub key: [u8; 32],  
+    pub salt: [u8; 16],  
+}  
+    
+/// Use PBKDF2 to generate a key based on a password  
+/// 
+/// ## parameters:  
+/// * `password` - The password to use to generate a key.
+/// * `salt` - The salt to use when generating the key, will be automatically generated when `None`.  
+pub fn derive_key_from_passphrase(password: &str, salt: Option<[u8; 16]>) -> KeyDetails {  
+    let pass = password.as_bytes();  
+    let salt = if let Some(salt) = salt {  
+        salt  
+    } else {  
+        generate_salt()  
+    };  
+        
+    let mut key_buffer = [0u8; 32];  
+    pbkdf2_hmac::<Sha256>(pass, &salt, ITERATIONS, &mut key_buffer);  
+    
+    KeyDetails {  
+        password: String::from(password),  
+        key: key_buffer,  
+        salt,  
+    }  
+}
+
+fn generate_salt() -> [u8; 16] {  
+    let mut buffer = [0u8; 16];  
+    rand::thread_rng().fill(&mut buffer);  
+    buffer  
+}
+            </code></pre>
+            
+            <p>
+                Notice how it also uses a so called '<i>salt</i>'. A salt is a buffer with a couple of randomly generated 
+                bytes in it, in this case 16 bytes to be precise. It is important to make sure this salt is generated 
+                using a cryptographically secure random generator. 
+                The salt is used to make sure that even when using the same password again and again, the generated 
+                key is still different each time. 
+            </p>
+            
+            <p>
+                Furthermore we don't have to change much in our code. Instead of directly using the user provided 
+                password, we are just going to generate a key based on the given password and a random salt. Then we 
+                will use this key to XOR all the plaintext, instead of the password.
+            </p>
+            
+            <h3>What I learned</h3>
+            <p>
+                Before implementing key derivation I didn't really understand what a 'salt' was exactly. I knew that a 
+                salt could, in my case, be used to ensure that the same user password would not result in the same key 
+                twice. I just didn't know what a salt IS. Now I know its just a couple of randomized bits. 
+            </p>
+            <p>
+                I also didn't know how I could store the salt to later use on decryption. I now know the salt does not 
+                contain any secret information and can just be appended to the ciphertext. 
+            </p>
+        </section>
+        
+        <section id="shuffle-data">
+            <h2>Increasing the randomness by '<i>shuffling</i>' data.</h2>
+            
+            <p>
+                Thus far the only thing our algorithm does is generate a key based on a salt and user password, and 
+                then XOR the plaintext with the key to create our ciphertext. To understand why this isn't secure you 
+                will first need to understand some concepts that are used to make cryptographic algorithms more secure.
+            </p>
+            
+            <h3>Avalanche effect</h3>
+            <p>
+                One of the most important properties of a strong cryptographic algorithm is the <i>avalanche effect</i>. 
+                This term describes how a small change in the input—whether it's the plaintext, the key, or any 
+                parameter—should result in a drastically different output. In other words, flipping a single bit of the 
+                input should flip, on average, half the bits in the output ciphertext.
+            </p>
+            <p>
+                Why is this important? Imagine an encryption algorithm that doesn’t have this property. Patterns from 
+                the input might still be visible in the ciphertext, potentially allowing attackers to infer useful 
+                information about the plaintext or the key. The avalanche effect ensures that even the tiniest variation 
+                in input leads to a completely unrecognizable output, making it much harder for an attacker to 
+                reverse-engineer or analyze the encryption process.
+            </p>
+            
+            <h3>Diffusion</h3>
+            <p>
+                Closely related to the avalanche effect is the concept of _diffusion_. The idea behind diffusion is to 
+                spread the influence of every part of the input across the entire output. In other words, a change to 
+                one part of the plaintext or key should affect every part of the ciphertext.
+            </p>
+            
+            <p>
+                Diffusion ensures that any patterns in the plaintext are thoroughly disguised within the ciphertext. 
+                This is usually achieved through mathematical transformations or mixing operations that blend the input 
+                data across multiple steps. Without diffusion, encrypted data might still reveal subtle clues about the 
+                original message, leaving the algorithm vulnerable to cryptanalysis.
+            </p>
+            <br/>
+            <p>
+                Coming up with an algorithm that has both these properties is very difficult and often involves advanced 
+                mathematical concepts, which I won't pretend to understand. However I have been looking into ciphers 
+                like AES. That's why I for this algorithm I choose to use AES as an inspiration for the blending of inputs. 
+                I must make very clear that I am not a mathematician, and the data transformations my algorithm makes 
+                are far from as secure as the ones AES uses. Still, implementing my own data transformation was very 
+                educational, and my approach is probably a lot easier to understand to others than the one use by AES.
+            </p>
+            
+            <h3>My transformations</h3>
+            <p>
+                I named the first transformation my algorithm applies to the input data '*Rotate Shells*', and this is 
+                how it works. During this step we loop over the plaintext in blocks of 25 bytes, and put the 25 bytes 
+                in a 5x5 matrix. Then we take the outer layer, or shell, and rotate it 90 degrees clockwise. After that 
+                we take the inner shell and rotate it 180 degrees. The image below shows how this works. Here the 'outer 
+                shell' is marked in blue, and the 'inner shell' is marked in green. 
+            </p>
+            <img src="./rotate-shells.png" alt="rotate-shells"/>
+            
+            <p>
+                The next step the algorithm is going to take I called 'mirror matrix'. During this phase it is going 
+                loop over the plaintext, but this time in blocks of 9 bytes. Again we put the bytes in a matrix, this 
+                time a 3x3 matrix. Next it is going to mirror this matrix over the y-axis. The image below shows how 
+                this looks. 
+            </p>
+            <img src="./mirror-matrix.png" alt="mirror-matrix"/>
+            <p>
+                This is pretty decent at mixing the input data. For an example lets take the following sentence and 
+                shuffle it without actually encrypting it to show the difference:
+            </p>
+            <p>
+                <b>original:</b><br/>
+                'Are you still able to read this? I hope it took you some effort.'<br/>
+                <br/>
+                <b>transformed text:</b><br/>
+                'aty atle  eerll srA ubio iooo  thtytopeI  k? hsduoios  emffetro.'
+            </p>
+            
+            <p>
+                Again there is no mathematical prove that this way of mixing is any good when it comes to its security. 
+                It does however give a simple demonstration of the kind of transformations that can be used to obscure data. 
+            </p>
+            
+            <h3>What I learned</h3>
+            <p>
+                Before I started creating my own encryption algorithm, I looked into the inner workings of already 
+                existing algorithms. I have spend a particularly large mount of time trying to figure out how AES works. 
+                Learning about all the steps it takes, and why, made me realize how extremely difficult it is to make 
+                sure the produced ciphertext is secure. It has to account for potential patterns in the cipher text, 
+                the time it takes to encrypt, the fact that some transformations might cause vulnerabilities and so 
+                much more.<br/>
+                This really made me see why no one should ever USE their own cryptographic ciphers. The chances of it 
+                being insecure in ways you never thought about are very high. 
+            </p>
+        </section>
+        
+        <section id="authentication">
+            <h2>Verifying the decrypted data using a MAC.</h2>
+            <p>
+                At this point the algorithms is able to encrypt data pretty well, but we will need to confirm this later. 
+                There is however still one mayor problem with this algorithm: it doesn't use authentication. 
+            </p>
+            
+            <h3>Authentication</h3>
+            <p>
+                In cryptography, authentication is a little different from authenticating on a app or website. 
+                In cryptography authentication is used to verify that the ciphertext has not been modified by any third 
+                parties, or errors in transit. The way this is typically done is by using some kind of 'stamp' that's 
+                uniquely generated for the plaintext. This 'stamp' is most often a cryptographic <b>hash</b>. 
+            </p>
+            <p>
+                A cryptographic hash is a function that transforms any input into a fixed-size string of seemingly 
+                random characters. It has some important properties: the same input always gives the same output, even a 
+                tiny change in the input drastically changes the output, and you can’t reverse the process to find the 
+                original input. 
+            </p>
+            <p>
+                What we are going to do is generate a hash based on the plaintext that should be encrypted. This hash is 
+                unique to the plaintext, so if we adjust the plaintext by a single bit, the output hash will be entirely 
+                different. We can use this to verify the plaintext hasn't changed.
+            </p>
+            <p>
+                What we are going to do is as follows:<br/>On encryption we will:
+            </p>
+            
+            <ol>
+                <li>Generate a hash based on the plaintext.</li>
+                <li>Append the hash to the plaintext.</li>
+                <li>Encrypt the plaintext (and hash).</li>
+            </ol>
+            
+            <p>When decrupting we will:</p>
+            <ol>
+                <li>Decrypt the ciphertext.</li>
+                <li>Get the stored hash from the plaintext.</li>
+                <li>Recalculate the hash on the decrypted plaintext. </li>
+                <li>Check if the stored and recalculated hash are the same.</li>
+                <li>
+                    If both hashes are the same, everything is fine. If not, the ciphertext has been modified by a third 
+                    party. We should stop the decryption. 
+                </li>
+            </ol>
+            
+            <p>
+                We won't be using a regular hash though. Instead we will be using a MAC, or to be more specific a HMAC 
+                (hash-MAC). The difference is that we won't be generating the hash solely based on the plaintext, but 
+                also on a key. 
+            </p>
+            <p>
+                The code below shows how the MAC is created and used, but leaves the previously discussed details out.
+            </p>
+            <p>
+                On encryption:
+            </p>
+            
+            <pre><code>
+pub fn encrypt(mut data: Vec<u8>, password: &str) -> IoResult<Vec<u8>> {  
+    let key_details = derive_key_from_passphrase(password, None);  
+    let mac = authentication::generate_hmac(&data, &key_details.key).unwrap();  
+        
+    // append HMAC to plaintext  
+    for byte in mac {  
+        data.push(byte);  
+    }  
+    
+    // 1. XOR the plaintext with the derived key.
+    // 2. Transform the data by rotating shells.
+    // 3. Transform data by mirroring matrices.
+    ...
+        
+    // append salt to encrypted data  
+    for byte in key_details.salt {  
+        data.push(byte);  
+    }  
+        
+    Ok(data)  
+}
+            </code></pre>
+            
+            <p>And when decrypting:</p>
+            <pre><code>
+pub fn decrypt(mut data: Vec<u8>, password: &str) -> IoResult<Vec<u8>> {  
+    // Get salt from last 16 bytes  
+    let salt_vec = data.split_off(data.len() - 16);  
+        
+    // 1. Transform data by mirroring matrices.
+    // 2. Transform the data by rotating shells.
+    // 3. XOR the plaintext with the derived key.
+    ...
+    
+    // Get the HMAC from the last 32 bytes of the plaintext
+    let stored_mac = data.split_off(data.len() - 32);  
+    // recalculate the HMAC to verify both are equal.   
+    let new_mac = authentication::generate_hmac(
+        &data, 
+        &key_details.key
+    ).unwrap();  
+        
+    // Check if both HMACs are the equal.
+    for i in 0..32 {  
+        if stored_mac[i] != new_mac[i] {  
+            return Err(std::io::Error::new(  
+                ErrorKind::InvalidData,  
+                "Authentication process failed"  
+            ));  
+        }  
+    }  
+        
+    Ok(data)  
+}
+            </code></pre>
+            
+            <h3>What I learned</h3>
+            <p>
+                Before diving into the world of cryptography I had never realized that authentication with encryption 
+                even exists. I know now that it is a very important part that ensures encrypted data has not been 
+                tampered with when decrypting. This way when the ciphertext get successfully decrypted we know the 
+                resulting plaintext is exactly how it's supposed to be.
+            </p>
+        </section>
+        
+        
+        <section id="testing">
+            <h2>Testing the algorithm</h2>
+            <p>
+                At this point the encryption algorithm is done (or at least for now). This means there is only one thing 
+                left to do, testing it of course!<br/>
+                Running the application on some text and image files shows that it is at least capable of encrypting / 
+                decrypting data. But I don't just want to see if it works, I want to know if it's actually somewhat secure.<br/>
+                There are multiple tests I used to test the security. How I executed these tests and what their results 
+                were is what you will read about in this paragraph.<br/>
+            </p>
+            
+            <h3>Performance test</h3>
+            <p>
+                Before testing the security I was also quite curious of how fast my algorithm is compared to AES-GCM. 
+                I kept this test minimal since it doesn't say much about the security in the context. What I did was 
+                encrypt and decrypt a 4.2 MB jpeg image to see how long it takes on average. This was the result:
+            </p>
+            
+            <table>
+                <tr>
+                    <th>encryption algorithm</th>
+                    <th>encryption</th>
+                    <th>decryption</th>
+                </tr>
+                <tr>
+                    <td>AES-GCM</td>
+                    <td>75 millis</td>
+                    <td>76 millis</td>
+                </tr>
+                <tr>
+                    <td>DUM-encryption</td>
+                    <td>120 millis</td>
+                    <td>118 millis</td>
+                </tr>
+            </table> 
+              
+            <p>
+                These results surprised me quite a bit, I was expecting my algorithm to be faster than AES-GCM since it 
+                uses less steps in its encryption process. The reason why my encryption algorithm is slower has to do 
+                with its implementation.
+            </p>
+            <p>
+                For the sake of making it easier to develop, my algorithm uses a lot vectors, comparable to Lists in 
+                most programming languages. In Rust vectors are not much slower in use then arrays, but when looping 
+                over 4.2MB of data in chunks of 25 and 9 bytes and continuously putting the data in a less efficient 
+                List, this starts to really add up. 
+            </p>
+            
+            <h3>Password length test</h3>
+            <p>
+                As a next test, I wanted to see if changing the length of the used password has any effect on the total 
+                encryption/decryption time. This shouldn't be the case as it could give indications to malicious parties 
+                about the length of a password that was used to encrypt some data. 
+            </p>
+            <p>
+                To test this I first simply encrypted the same 4.2MB image with multiple different passwords of varying lengths.
+            </p>
+              
+            <table>
+                <tr>
+                    <th>password used</th>
+                    <th>AES-GCM encryption</th>
+                    <th>AES-GCM decryption</th>
+                    <th>DUM encryption</th>
+                    <th>DUM decryption</th>
+                </tr>
+                <tr>
+                    <td>'shortt'</td>
+                    <td>75 millis</td>
+                    <td>71 millis</td>
+                    <td>115 millis</td>
+                    <td>145 millis</td>
+                </tr>
+                <tr>
+                    <td>'longerpassword'</td>
+                    <td>80 millis</td>
+                    <td>70 millis</td>
+                    <td>120 millis</td>
+                    <td>120 millis</td>
+                </tr>
+                <tr>
+                    <td>'w3elcJs))PPe:Zt:FQD/#(,*xx'</td>
+                    <td>72 millis</td>
+                    <td>72 millis</td>
+                    <td>119 millis</td>
+                    <td>117 millis</td>
+                </tr>
+                <tr>
+                    <td>'92856235238'</td>
+                    <td>75 millis</td>
+                    <td>71 millis</td>
+                    <td>115 millis</td>
+                    <td>116 millis</td>
+                </tr>
+            </table> 
+              
+            <p>
+                As you can see the time it took to encrypt/decrypt data was for both algorithms approximately the same, 
+                this is what we want to see.  
+            </p>
+            <p>
+                The results I got here weren't that surprising, since DUM-encryption uses the `PBKDF2` to generate the 
+                encryption key. After doing this the algorithm is always the exact same, so only the plaintext's length 
+                should affect the encryption/decryption times.<br/> Still, in software development it's easy to forget 
+                about some of the implementation logic. This was the reason I still wanted to test this, along with the 
+                fact that this is one of the standard tests for cryptographic algorithms. 
+            </p>
+        </section>
+        
+        
+        
+        <!-- mockup starts here -->
+        <section id="conclusion">
+            <h2>Conclusion</h2>
+            <p>
+                lorem ipsum
+            </p>
+        </section>
+
+        <footer>
+            <p>
+                &copy; 2024 Rik de Goede. All Rights Reserved.
+            </p>
+        </footer>
+    </div>
+    
+    
+    <!-- Add syntax hightlighting to codeblocks -->
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+    </script>
+</body>
+</html>
+
