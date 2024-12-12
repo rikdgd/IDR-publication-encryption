@@ -656,6 +656,92 @@ pub fn decrypt(mut data: Vec<u8>, password: &str) -> IoResult<Vec<u8>> {
                 about some of the implementation logic. This was the reason I still wanted to test this, along with the 
                 fact that this is one of the standard tests for cryptographic algorithms. 
             </p>
+            
+            <h3>Byte frequency test</h3>
+            <p>
+                The ciphertext of our encryption algorithm shouldn't contain any patterns, as this would mean it isn’t 
+                very random. Patterns could help malicious actors to determine the kind of data that was encrypted and 
+                possibly even more. 
+            </p>
+            <p>
+                A good way to test if an encryption algorithm creates patterns in it’s ciphertext, is to just encrypt a 
+                long string containing only a single type of character. This is also what I did on some ciphertext 
+                created by my own algorithm: DUM-encryption, as well as with AES-GCM to be able to compare both.
+            </p>
+            <p>
+                After generating the ciphertexts, I was able to analyse their byte frequencies. The frequency at which 
+                each possible value occurs should be evenly distributed. This would make it highly unlikely for patterns 
+                to be present in the ciphertext.
+            </p>
+            <p>
+                The results are visible in the images below:
+            </p>
+            
+            <p><b>Results frequency analysis DUM-encryption:</b></p>
+            <img src="./byte-frequency-dum.png" alt="byte-frequency-dum"/>
+            <br/>
+            <br/>
+            <p><b>Results frequency analysis AES-GCM-encryption:</b></p>
+            <img src="./byte-frequency-aes.png" alt="byte-frequency-dum"/>
+            
+            <p>
+                The outcomes of this test are pretty obvious, AES is by far the winner. I was certainly expecting to see 
+                my own algorithm lose, but not by this much. The amount of identical byte values in the DUM-encryption’s 
+                ciphertext is very high which indicates that it most likely contains patterns that could be used to get 
+                ome information about the encrypted data.
+            </p>
+            <p>
+                While this is disappointing, it does show a good message: never use your own encryption algorithms to 
+                protect data, use something that's proven to work. There is a good reason I named my algorithm 
+                ‘<i>Dont Use Me (DUM) encryption</i>’. 
+            </p>
+            
+            
+            <h3>Bit-change test</h3>
+            <p>
+                In the following test a file will be encrypted using AES-GCM and DUM-cipher. Then a copy of the file 
+                with a single bit adjusted is also encrypted. Then the amount different bits is counted.<br/>
+                The resulting ciphertext's should at least be 50% different when following NIST's standards. 
+            </p>
+            <p>
+                The example of encrypting a file containing only 1 type of character is exactly the first test I did 
+                with patterned data. 
+            </p>
+            <p>
+                Again, the password used in these tests is: 'password'
+            </p>
+            <p>
+                To calculate the amount of different bits in the ciphertext, the following python script was  used:
+            </p>
+            <pre><code>
+def count_different_bits(data1, data2):
+    """
+    Counts the number of differing bits between two byte sequences.
+    
+    :param data1: First byte sequence (e.g., ciphertext 1).
+    :param data2: Second byte sequence (e.g., ciphertext 2).
+    :return: Number of differing bits.
+    """
+    # Ensure the data lengths match; if not, pad the shorter one with zeros
+    length = max(len(data1), len(data2))
+    data1 = data1.ljust(length, b'\x00')
+    data2 = data2.ljust(length, b'\x00')
+
+    # XOR the two data sequences to find differing bits
+    differing_bits = 0
+    for byte1, byte2 in zip(data1, data2):
+        differing_bits += bin(byte1 ^ byte2).count('1')  # Count '1's in the XOR result
+
+    return differing_bits
+
+    
+with open('bit-flipped.txt', 'rb') as f1, open('bit-unflipped.txt', 'rb') as f2:
+    data1 = f1.read()
+    data2 = f2.read()
+
+bit_difference = count_different_bits(data1, data2)
+print(f"Number of differing bits: {bit_difference}")
+            </code></pre>
         </section>
         
         
