@@ -709,7 +709,9 @@ pub fn decrypt(mut data: Vec<u8>, password: &str) -> IoResult<Vec<u8>> {
                 with patterned data. 
             </p>
             <p>
-                Again, the password used in these tests is: 'password'
+                It's important to note that to test this effectively, we should not only use the same password, but the 
+                same exact key! Remember we implemented <b>key derivation</b>. The only thing that should change in this tested
+                is the input data: the test file.
             </p>
             <p>
                 To calculate the amount of different bits in the ciphertext, the following python script was  used:
@@ -743,6 +745,17 @@ with open('bit-flipped.txt', 'rb') as f1, open('bit-unflipped.txt', 'rb') as f2:
 bit_difference = count_different_bits(data1, data2)
 print(f"Number of differing bits: {bit_difference}")
             </code></pre>
+            
+            <p>
+                The result: <b>122 bits</b> in difference.<br/>
+                This result is shockingly low and truly tells us this encryption algorithm we build is far from secure. 
+            </p>
+            
+            <h3>Conclusion</h3>
+            <p>
+                At the moment the algorithm is far from secure. This was to be expected since we have still have a flaw 
+                in the algorithm. Let's try to tackle it and test it again!
+            </p>
         </section>
         
         <section id="final-improvement">
@@ -759,13 +772,14 @@ print(f"Number of differing bits: {bit_difference}")
             <p>
                 Each time we encrypt a chunk/block of data, we perform a couple of transformations on it to obscure the 
                 data in that block. To do this we don't need any data from outside of this block, which makes encrypting 
-                each block independent of the last. This means that patterns in the data will remain detectable as each 
-                block of ciphertext has had the exact same transformations. 
+                each block independent of the others. This means that patterns in the data will remain detectable as each 
+                block of ciphertext has had the exact same transformations. <br/>
+                We are only adding a pattern on top of another pattern, so to speak.
             </p>
             
             <p>
                 To address this issue a little bit better we can perform a seemingly simple trick. When performing the 
-                '<b>rotate shells</b>' step during encryption, we are going to XOR each block of data with the previously, 
+                '<b>rotate shells</b>' step during encryption, we are going to XOR each block of data with the previous, 
                 already encrypted, block of data. <br/>
                 And if you're thinking to yourself '<i>What about the first block of data?</i>', we will use a random 
                 '<i>initialization vector</i>' for this. This '<i>initialization vector</i>' isn't secret so we can 
@@ -795,6 +809,65 @@ fn generate_init_vector() -> [u8; ROTATE_CHUNK_SIZE] {
                 has improved. I won't bother you with the explanations of the tests again, so here are the results:
             </p>
             
+            <h3>Performance test</h3>
+            <table>
+                <tr>
+                    <th>encryption algorithm</th>
+                    <th>encryption</th>
+                    <th>decryption</th>
+                </tr>
+                <tr>
+                    <td>AES-GCM</td>
+                    <td>75 millis</td>
+                    <td>76 millis</td>
+                </tr>
+                <tr>
+                    <td>DUM-encryption</td>
+                    <td>185 millis</td>
+                    <td>191 millis</td>
+                </tr>
+            </table> 
+            
+            <h3>Password length test</h3>
+            <table>
+                <tr>
+                    <th>password used</th>
+                    <th>AES-GCM encryption</th>
+                    <th>AES-GCM decryption</th>
+                    <th>DUM encryption</th>
+                    <th>DUM decryption</th>
+                </tr>
+                <tr>
+                    <td>'shortt'</td>
+                    <td>75 millis</td>
+                    <td>71 millis</td>
+                    <td>180 millis</td>
+                    <td>186 millis</td>
+                </tr>
+                <tr>
+                    <td>'longerpassword'</td>
+                    <td>80 millis</td>
+                    <td>70 millis</td>
+                    <td>181 millis</td>
+                    <td>181 millis</td>
+                </tr>
+                <tr>
+                    <td>'w3elcJs))PPe:Zt:FQD/#(,*xx'</td>
+                    <td>72 millis</td>
+                    <td>72 millis</td>
+                    <td>179 millis</td>
+                    <td>183 millis</td>
+                </tr>
+                <tr>
+                    <td>'92856235238'</td>
+                    <td>75 millis</td>
+                    <td>71 millis</td>
+                    <td>180 millis</td>
+                    <td>187 millis</td>
+                </tr>
+            </table> 
+            
+            
             <h3>Byte frequency test</h3>
             <img src="./byte_frequency-dum-updated.png"/>
             <p>
@@ -811,8 +884,6 @@ fn generate_init_vector() -> [u8; ROTATE_CHUNK_SIZE] {
         </section>
         
         
-        
-        <!-- mockup starts here -->
         <section id="conclusion">
             <h2>Conclusion</h2>
             <p>
