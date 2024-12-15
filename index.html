@@ -700,7 +700,7 @@ pub fn decrypt(mut data: Vec<u8>, password: &str) -> IoResult<Vec<u8>> {
             <h3>Bit-change test</h3>
             <p>
                 In the following test a file will be encrypted using AES-GCM and DUM-cipher. Then a copy of the file 
-                with a single bit adjusted is also encrypted. Then the amount different bits is counted.<br/>
+                with a single bit adjusted, is also encrypted. Then the amount different bits is counted.<br/>
                 The resulting ciphertext's should at least be 50% different when following NIST's standards. 
             </p>
             <p>
@@ -742,6 +742,67 @@ with open('bit-flipped.txt', 'rb') as f1, open('bit-unflipped.txt', 'rb') as f2:
 bit_difference = count_different_bits(data1, data2)
 print(f"Number of differing bits: {bit_difference}")
             </code></pre>
+        </section>
+        
+        <section id="final-improvement">
+            <h2>Final improvement</h2>
+            
+            <p>
+                The written algorithm performs pretty poorly on the tests we've put it through. This was expected by me, 
+                but I did however hope it would perform slightly better. 
+            </p>
+            <p>
+                One of the main reasons the current version of the algorithm doesn't perform so well, can be explained 
+                by the fact that our encryption steps are independent of one another. Allow me to explain.
+            </p>
+            <p>
+                Each time we encrypt a chunk/block of data, we perform a couple of transformations on it to obscure the 
+                data in that block. To do this we don't need any data from outside of this block, which makes encrypting 
+                each block independent of the last. This means that patterns in the data will remain detectable as each 
+                block of ciphertext has had the exact same transformations. 
+            </p>
+            
+            <p>
+                To address this issue a little bit better we can perform a seemingly simple trick. When performing the 
+                '<b>rotate shells</b>' step during encryption, we are going to XOR each block of data with the previously, 
+                already encrypted, block of data. <br/>
+                And if you're thinking to yourself '<i>What about the first block of data?</i>', we will use a random 
+                '<i>initialization vector</i>' for this. This '<i>initialization vector</i>' isn't secret so we can 
+                safely store it with the ciphertext. 
+            </p>
+            <p>
+                To create a new initialization vector we can use the following piece of Rust code:
+            </p>
+            <pre><code>
+use rand;
+
+const ROTATE_CHUNK_SIZE: usize = 25;
+
+fn generate_init_vector() -> [u8; ROTATE_CHUNK_SIZE] {  
+    let mut buffer = [0u8; ROTATE_CHUNK_SIZE];  
+    rand::thread_rng().fill(&mut buffer);  
+    buffer  
+}                
+            </code></pre>
+        </section>
+        
+        <section id="imporved-test-results">
+            <h2>Improved test results</h2>
+            
+            <p>
+                Now that we have improved the algorithm a little bit we can perform the same tests on it to see if it 
+                has improved. I won't bother you with the explanations of the tests again, so here are the results:
+            </p>
+            
+            <h3>Byte frequency test</h3>
+            <img src="./byte_frequency-dum-updated.png"/>
+            
+            <h3>Bit-change test</h3>
+            <p>
+                Encrypting two <b>4.2MB</b> JPEG files with only a single different bit now results in different <b>15902697</b> 
+                bits in the ciphertext. Which is equal to: <b>1.987837 MB</b>. This means we are just below the required 
+                50% of bits difference, but this is a very great improvement compared to the previous version of the algorithm!
+            </p>
         </section>
         
         
