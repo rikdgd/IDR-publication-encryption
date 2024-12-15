@@ -227,12 +227,23 @@ pub fn encrypt(&mut self) -> std::io::Result<()> {
             
             <img src="./pass-in-ciphertext.png" alt="password-in-ciphertext"/>
             
-            <h3>What I learned</h3>
+            <h3>Summary</h3>
             <p>
                 Creating this very minimal encryption algorithm has made me more comfortable with directly working with 
                 bytes and logic gates. More importantly however is that it has shown me that vulnerabilties in 
                 cryptographic algorithms are sometimes hard to find. I had never thought about the fact that simply 
-                XOR'ing the password over a file could directly expose that password. 
+                XOR'ing the password over a file could directly expose that password. Here is why this is the case:
+                <br/><br/>
+                In some file formats, or just in general when you have large structured data, there might be a couple of 
+                bits in succession that are all  0. <br/>
+                When XOR'ing anything with only 0's, it always stays unchanged. This means that when the file contains 
+                a lot of 0's after one another, the password will be XOR'ed with 0's and then written to the file. 
+                Not good.
+                <br/><br/>
+                <i><p>
+                    For the ones with good eyes, no, this was not the exact case here. Note that the password is all capital, 
+                    this means that we XOR'ed the key in such a way that the letters became their capital version.
+                </p></i>
             </p>
             
         </section>
@@ -317,15 +328,11 @@ fn generate_salt() -> [u8; 16] {
                 will use this key to XOR all the plaintext, instead of the password.
             </p>
             
-            <h3>What I learned</h3>
+            <h3>Summary</h3>
             <p>
-                Before implementing key derivation I didn't really understand what a 'salt' was exactly. I knew that a 
-                salt could, in my case, be used to ensure that the same user password would not result in the same key 
-                twice. I just didn't know what a salt IS. Now I know its just a couple of randomized bits. 
-            </p>
-            <p>
-                I also didn't know how I could store the salt to later use on decryption. I now know the salt does not 
-                contain any secret information and can just be appended to the ciphertext. 
+                The algorithm is now a lot more secure by implementing key derivation. Key derivation ensures that the 
+                used key is 'random' and has a good length. We also made sure that the same password doesn't result in 
+                the same key by using a randomly generated salt made with a secure random number generator. 
             </p>
         </section>
         
@@ -410,6 +417,14 @@ fn generate_salt() -> [u8; 16] {
                 It does however give a simple demonstration of the kind of transformations that can be used to obscure data. 
             </p>
             
+            <h3>Summary</h3>
+            <p>
+                We have made sure that the data is now not only modified using a XOR operation, but also shifted 
+                around in an attempt to increase the diffusion.<br/>
+                None of the new mutations are mathematically proven to be good for diffusion, they were rather 'crafted' 
+                based on some of the steps AES takes in an attempt to give a simpler demonstration. 
+            </p>
+            
             <h3>What I learned</h3>
             <p>
                 Before I started creating my own encryption algorithm, I looked into the inner workings of already 
@@ -418,8 +433,8 @@ fn generate_salt() -> [u8; 16] {
                 sure the produced ciphertext is secure. It has to account for potential patterns in the cipher text, 
                 the time it takes to encrypt, the fact that some transformations might cause vulnerabilities and so 
                 much more.<br/>
-                This really made me see why no one should ever USE their own cryptographic ciphers. The chances of it 
-                being insecure in ways you never thought about are very high. 
+                This really made me see why no one should ever USE their own cryptographic ciphers to hide confidential 
+                information. The chances of it being insecure in ways you never thought about are very high. 
             </p>
         </section>
         
@@ -539,12 +554,14 @@ pub fn decrypt(mut data: Vec<u8>, password: &str) -> IoResult<Vec<u8>> {
 }
             </code></pre>
             
-            <h3>What I learned</h3>
+            <h3>Summary</h3>
             <p>
-                Before diving into the world of cryptography I had never realized that authentication with encryption 
-                even exists. I know now that it is a very important part that ensures encrypted data has not been 
-                tampered with when decrypting. This way when the ciphertext get successfully decrypted we know the 
-                resulting plaintext is exactly how it's supposed to be.
+                We have made sure that our encrypted data is not only hidden from outsiders, but also protected. 
+                Whenever our ciphertext gets modified, whether in transit or by a malicious actor, it will not get 
+                decrypted even with the right password.<br/>
+                At first, this might not seem like a big deal, but remember that the goal of encryption is not just to 
+                hide data, but also to ensure that the data is authentic and unchanged.<br/><br/>
+                Ask yourself: is it worth it to protect data of which you don't even know for sure what it is?
             </p>
         </section>
         
