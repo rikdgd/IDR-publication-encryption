@@ -881,15 +881,31 @@ fn generate_init_vector() -> [u8; ROTATE_CHUNK_SIZE] {
                 50% of bits difference with <b>47.62%</b> different bits. This is a great improvement compared to 
                 the previous version of the algorithm!
             </p>
+            
+            <h3>Summary</h3>
+            <p>
+                While the added changes have made the algorithm a bit slower, the security of it has drastically improved! 
+                Seeing these results is a lot more satisfying than looking at the first round. The algorithm might not 
+                be as good as AES, but performs quite well considering the relatively low amount of time spend on it. 
+            </p>
         </section>
         
         
         <section id="conclusion">
             <h2>Conclusion</h2>
             <p>
-                lorem ipsum
+                Now that the project is done, we have ourselves a encryption algorithm that is able to encrypt data. 
+                While it might not be as secure as AES-GCM or most modern algorithms/ciphers, it performs pretty well on 
+                the tests considering the fact that none of the steps it takes are mathematically proven to work well. 
+                <br/>
+                That being said, let me emphasize again: this algorithm is not secure enough to use in a production 
+                environment. However, that wasn’t the goal of this project. I developed this encryption algorithm to 
+                learn more about how encryption works, and I can confidently say that I've learned a lot.
             </p>
         </section>
+        
+        
+        <p><i>Thank you for reading!</i></p>
 
         <footer>
             <p>
