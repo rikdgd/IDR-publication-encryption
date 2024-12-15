@@ -699,8 +699,9 @@ pub fn decrypt(mut data: Vec<u8>, password: &str) -> IoResult<Vec<u8>> {
             
             <h3>Bit-change test</h3>
             <p>
-                In the following test a file will be encrypted using AES-GCM and DUM-cipher. Then a copy of the file 
-                with a single bit adjusted, is also encrypted. Then the amount different bits is counted.<br/>
+                In the following test a <b>4.2 MB (33394416 bits)</b> file will be encrypted using AES-GCM and DUM-cipher. 
+                Then a copy of the file with a single bit adjusted, is also encrypted. Then the amount different bits 
+                is counted.<br/>
                 The resulting ciphertext's should at least be 50% different when following NIST's standards. 
             </p>
             <p>
@@ -796,12 +797,16 @@ fn generate_init_vector() -> [u8; ROTATE_CHUNK_SIZE] {
             
             <h3>Byte frequency test</h3>
             <img src="./byte_frequency-dum-updated.png"/>
+            <p>
+                As visible the frequencies of each byte occuring have lowered and there is more variation in the values they hold.
+            </p>
             
             <h3>Bit-change test</h3>
             <p>
-                Encrypting two <b>4.2MB</b> JPEG files with only a single different bit now results in different <b>15902697</b> 
+                Encrypting two <b>4.2MB (33394416 bits)</b> JPEG files with only a single different bit now results in <b>15902697</b> different
                 bits in the ciphertext. Which is equal to: <b>1.987837 MB</b>. This means we are just below the required 
-                50% of bits difference, but this is a very great improvement compared to the previous version of the algorithm!
+                50% of bits difference with <b>47.62%</b> different bits. This is a great improvement compared to 
+                the previous version of the algorithm!
             </p>
         </section>
         
